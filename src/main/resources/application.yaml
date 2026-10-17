@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: digital-forensics
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/digital_forensics
+    username: forensics_app
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+
+server:
+  port: 8080
