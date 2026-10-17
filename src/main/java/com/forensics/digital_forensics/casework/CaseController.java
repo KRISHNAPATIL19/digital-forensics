@@ -3,25 +3,23 @@ package com.forensics.digital_forensics.casework;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/cases")
+@RequiredArgsConstructor
 public class CaseController {
 
     private final CaseService service;
-
-    public CaseController(CaseService service) {
-        this.service = service;
-    }
 
     public record CreateCaseRequest(
             @NotBlank @Size(max = 150) String title,
@@ -35,23 +33,31 @@ public class CaseController {
             CasePriority priority
     ) {}
 
-    public record UpdateStatusRequest(CaseStatus status) {}
+    public record UpdateStatusRequest(
+            @NotNull CaseStatus status
+    ) {}
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Case create(@Valid @RequestBody CreateCaseRequest request) {
+    public Case create(
+            @Valid @RequestBody CreateCaseRequest request
+    ) {
+        CasePriority priority = request.priority() == null
+                ? CasePriority.MEDIUM
+                : request.priority();
+
         return service.create(new Case(
                 request.title(),
                 request.description(),
-                request.priority() == null
-                        ? CasePriority.MEDIUM : request.priority()
+                priority
         ));
     }
 
     @GetMapping
     public Page<Case> getAll(
             @PageableDefault(size = 20, sort = "createdAt")
-            Pageable pageable) {
+            Pageable pageable
+    ) {
         return service.getAll(pageable);
     }
 
@@ -63,23 +69,24 @@ public class CaseController {
     @PutMapping("/{id}")
     public Case update(
             @PathVariable UUID id,
-            @Valid @RequestBody UpdateCaseRequest request) {
+            @Valid @RequestBody UpdateCaseRequest request
+    ) {
+        CasePriority priority = request.priority() == null
+                ? CasePriority.MEDIUM
+                : request.priority();
+
         return service.update(id, new Case(
                 request.title(),
                 request.description(),
-                request.priority() == null
-                        ? CasePriority.MEDIUM : request.priority()
+                priority
         ));
     }
 
     @PatchMapping("/{id}/status")
     public Case updateStatus(
             @PathVariable UUID id,
-            @Valid @RequestBody UpdateStatusRequest request) {
-        if (request.status() == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Status is required");
-        }
+            @Valid @RequestBody UpdateStatusRequest request
+    ) {
         return service.updateStatus(id, request.status());
     }
 
@@ -89,4 +96,3 @@ public class CaseController {
         service.delete(id);
     }
 }
-

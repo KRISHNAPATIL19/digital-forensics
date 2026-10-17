@@ -1,6 +1,7 @@
 
 package com.forensics.digital_forensics.casework;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -12,13 +13,10 @@ import java.util.UUID;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class CaseService {
 
     private final CaseRepository repository;
-
-    public CaseService(CaseRepository repository) {
-        this.repository = repository;
-    }
 
     public Case create(Case request) {
         return repository.save(request);
@@ -33,22 +31,27 @@ public class CaseService {
     public Case getById(UUID id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Case not found"));
+                        HttpStatus.NOT_FOUND,
+                        "Case not found"
+                ));
     }
 
     public Case update(UUID id, Case request) {
         Case existing = getById(id);
+
         existing.updateDetails(
                 request.getTitle(),
                 request.getDescription(),
                 request.getPriority()
         );
+
         return existing;
     }
 
     public Case updateStatus(UUID id, CaseStatus status) {
         Case existing = getById(id);
         existing.changeStatus(status);
+
         return existing;
     }
 
@@ -57,4 +60,3 @@ public class CaseService {
         repository.delete(existing);
     }
 }
-
